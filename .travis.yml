@@ -1,0 +1,9 @@
+language: erlang
+otp_release:
+    - 18.3
+    - 19.3
+before_script:
+  - chmod +x bootstrap_travis.sh
+  - "./bootstrap_travis.sh"
+script: "./rebar3 eunit"
+
