@@ -1,8 +1,10 @@
 -module(pg_model).
 -include_lib("eunit/include/eunit.hrl").
 
+-type pr_format() :: default | string.
+
 %% callbacks
--callback pr_formatter() -> atom().
+-callback pr_formatter(atom()) -> pr_format().
 -optional_callbacks([pr_formatter/0]).
 
 %% API exports
