@@ -5,7 +5,7 @@
 
 %% callbacks
 -callback pr_formatter(atom()) -> pr_format().
--optional_callbacks([pr_formatter/0]).
+-optional_callbacks([pr_formatter/1]).
 
 %% API exports
 -export([
