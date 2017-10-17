@@ -26,6 +26,9 @@
   , lager/3
 
 ]).
+%% types
+-type pg_model() :: tuple().
+-export_type([pg_model/0]).
 
 %%-compile(export_all).
 
@@ -218,7 +221,7 @@ to_test() ->
       , up_term_no=> <<"12345678">>, update_ts => 100
       , field=> undefined
     }
-    , to(?TEST_MODEL, R4,model)),
+    , to(?TEST_MODEL, R4, model)),
   ?assertEqual(
     [
       #{id=>1, mcht_full_name=><<"full">>, mcht_short_name=><<"short">>
@@ -234,7 +237,7 @@ to_test() ->
         , up_term_no=> <<"12345678">>, update_ts => 101
         , field=> undefined
       }
-    ], to(?TEST_MODEL, [R4, R41],model)),
+    ], to(?TEST_MODEL, [R4, R41], model)),
   ok.
 
 %%-------------------------------------------------------------------
