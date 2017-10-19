@@ -16,6 +16,9 @@
 
   , get/3
   , get/4
+
+  , get_proplist/3
+
   , set/3
   , set/4
 
@@ -121,6 +124,21 @@ get_test() ->
   ?assertEqual(1, get(?TEST_MODEL, R, id, 2)),
 
   ok.
+%%-------------------------------------------------------------------
+-spec get_proplist(M, Model, Keys) -> Result when
+  M :: atom(),
+  Model :: tuple(),
+  Keys :: [atom()],
+  Result :: proplists:proplist().
+
+get_proplist(M, Model, Keys) when is_atom(M), is_tuple(Model), is_list(Keys) ->
+  [{Key, get(M, Model, Key)} || Key <- Keys].
+
+get_proplist_test() ->
+  R = pg_test_utils:new(model),
+  ?assertEqual([{id, 1}, {mcht_full_name, <<"full">>}], get_proplist(?TEST_MODEL, R, [id, mcht_full_name])),
+  ok.
+
 %%-------------------------------------------------------------------
 set(_M, _Repo, id, _Value) ->
   {error, pk_could_not_be_changed};
