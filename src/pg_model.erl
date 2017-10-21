@@ -82,8 +82,9 @@ new_empty_test() ->
 
 %%-----------------------------------------------------------------
 new(M, List) when is_atom(M), is_list(List) ->
+  ListCleaned = clean_model_list(M, List),
   EmptyRec = new_empty(M),
-  NewRec = M: '#set-'(List, EmptyRec),
+  NewRec = M: '#set-'(ListCleaned, EmptyRec),
   NewRec;
 
 new(M, Map) when is_atom(M), is_map(Map) ->
@@ -93,8 +94,35 @@ new(M, Map) when is_atom(M), is_map(Map) ->
 new_test() ->
   ?assertEqual(new(?TEST_REPO, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}])
     , new(?TEST_REPO, #{id=>1, mcht_full_name=><<"aaa">>, update_ts => <<>>})),
+  ?assertEqual(new(?TEST_REPO, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}, {aa, 1}])
+    , new(?TEST_REPO, #{id=>1, mcht_full_name=><<"aaa">>, update_ts => <<>>})),
   ok.
 
+
+%%-------------------------------------------------------------------
+clean_model_list(M, List) ->
+  %% remove unexisted keys in M:fields() from List
+  F =
+    fun(Key, Acc) ->
+      AccNew = proplists:delete(Key, Acc),
+      AccNew
+    end,
+  UnexistedKeys = unexisted_keys(M, proplists:get_keys(List)),
+  lists:foldl(F, List, UnexistedKeys).
+
+clean_model_list_test() ->
+  ?assertEqual([{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}],
+    clean_model_list(?TEST_REPO, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}, {aa, 1}])),
+  ok.
+
+%%-------------------------------------------------------------------
+unexisted_keys(M, KeyList) ->
+  Fields = fields(M),
+  lists:subtract(KeyList, Fields).
+
+unexisted_keys_test() ->
+  ?assertEqual([aa], unexisted_keys(?TEST_REPO, [id, mcht_full_name, update_ts, field, aa])),
+  ok.
 %%-------------------------------------------------------------------
 %% getter/setter
 get(M, Repo, Key, Default) when is_atom(M), is_tuple(Repo), is_atom(Key) ->
