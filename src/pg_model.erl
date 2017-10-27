@@ -38,9 +38,8 @@
 
 %%-compile(export_all).
 
--define(TEST_REPO, pg_test_utils:name(repo)).
--define(TEST_REPO_TBL, pg_test_utils:name(table)).
--define(TEST_MODEL, pg_test_utils:name(model)).
+-define(TEST_MODEL_TBL, mchants).
+-define(TEST_MODEL, pg_model_t_model).
 
 %%====================================================================
 %% API functions
@@ -51,8 +50,7 @@ name(M) when is_atom(M) ->
   TableName.
 
 name_test() ->
-  ?assertEqual(?TEST_REPO_TBL, name(?TEST_REPO)),
-  ?assertEqual(?TEST_MODEL, name(?TEST_MODEL)),
+  ?assertEqual(?TEST_MODEL_TBL, name(?TEST_MODEL)),
   ok.
 %%-----------------------------------------------------------------
 fields(M) when is_atom(M) ->
@@ -72,9 +70,9 @@ new_empty(M) when is_atom(M) ->
   M: '#new-'(TableName).
 
 new_empty_test() ->
-  A = new_empty(?TEST_REPO),
-  TS = get(?TEST_REPO, A, update_ts),
-  ?assertEqual({?TEST_REPO_TBL, 0, <<"">>, <<"">>, normal, [gw_netbank], <<"">>,
+  A = new_empty(?TEST_MODEL),
+  TS = get(?TEST_MODEL, A, update_ts),
+  ?assertEqual({?TEST_MODEL_TBL, 0, <<"">>, <<"">>, normal, [gw_netbank], <<"">>,
     [{txn, -1}, {daily, -1}, {monthly, -1}], <<"12345678">>, TS,
     undefined}
     , A),
@@ -92,10 +90,10 @@ new(M, Map) when is_atom(M), is_map(Map) ->
   new(M, List).
 
 new_test() ->
-  ?assertEqual(new(?TEST_REPO, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}])
-    , new(?TEST_REPO, #{id=>1, mcht_full_name=><<"aaa">>, update_ts => <<>>})),
-  ?assertEqual(new(?TEST_REPO, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}, {aa, 1}])
-    , new(?TEST_REPO, #{id=>1, mcht_full_name=><<"aaa">>, update_ts => <<>>})),
+  ?assertEqual(new(?TEST_MODEL, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}])
+    , new(?TEST_MODEL, #{id=>1, mcht_full_name=><<"aaa">>, update_ts => <<>>})),
+  ?assertEqual(new(?TEST_MODEL, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}, {aa, 1}])
+    , new(?TEST_MODEL, #{id=>1, mcht_full_name=><<"aaa">>, update_ts => <<>>})),
   ok.
 
 
@@ -112,7 +110,7 @@ clean_model_list(M, List) ->
 
 clean_model_list_test() ->
   ?assertEqual([{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}],
-    clean_model_list(?TEST_REPO, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}, {aa, 1}])),
+    clean_model_list(?TEST_MODEL, [{id, 1}, {mcht_full_name, <<"aaa">>}, {update_ts, <<>>}, {field, undefined}, {aa, 1}])),
   ok.
 
 %%-------------------------------------------------------------------
@@ -121,7 +119,7 @@ unexisted_keys(M, KeyList) ->
   lists:subtract(KeyList, Fields).
 
 unexisted_keys_test() ->
-  ?assertEqual([aa], unexisted_keys(?TEST_REPO, [id, mcht_full_name, update_ts, field, aa])),
+  ?assertEqual([aa], unexisted_keys(?TEST_MODEL, [id, mcht_full_name, update_ts, field, aa])),
   ok.
 %%-------------------------------------------------------------------
 %% getter/setter
@@ -141,7 +139,7 @@ get(M, Repo, Keys) when is_atom(M), is_tuple(Repo), is_list(Keys) ->
   [get(M, Repo, Key) || Key <- Keys].
 
 get_test() ->
-  R = pg_test_utils:new(model),
+  R = t_new(model),
   ?assertEqual(1, get(?TEST_MODEL, R, id)),
   ?assertEqual(<<"full">>, get(?TEST_MODEL, R, mcht_full_name)),
 
@@ -163,7 +161,7 @@ get_proplist(M, Model, Keys) when is_atom(M), is_tuple(Model), is_list(Keys) ->
   [{Key, get(M, Model, Key)} || Key <- Keys].
 
 get_proplist_test() ->
-  R = pg_test_utils:new(model),
+  R = t_new(model),
   ?assertEqual([{id, 1}, {mcht_full_name, <<"full">>}], get_proplist(?TEST_MODEL, R, [id, mcht_full_name])),
   ok.
 
@@ -181,7 +179,7 @@ set(M, Repo, ValueLists) when is_atom(M), is_tuple(Repo), is_list(ValueLists) ->
   RepoNew.
 
 set_test() ->
-  R = pg_test_utils:new(model),
+  R = t_new(model),
   ?assertEqual({error, pk_could_not_be_changed}, set(?TEST_MODEL, R, id, 333)),
   R1 = set(?TEST_MODEL, R, mcht_full_name, <<"new full">>),
   ?assertEqual(<<"new full">>, get(?TEST_MODEL, R1, mcht_full_name)),
@@ -205,7 +203,7 @@ inc(M, Repo, {Key, IncValue}) when is_atom(M), is_tuple(Repo), is_integer(IncVal
   inc(M, Repo, Key, IncValue).
 
 inc_test() ->
-  R = pg_test_utils:new(model),
+  R = t_new(model),
   ?assertEqual({error, pk_could_not_be_changed}, inc(?TEST_MODEL, R, id, 1)),
   ?assertEqual(set(?TEST_MODEL, R, update_ts, 101), inc(?TEST_MODEL, R, update_ts, 1)),
   ?assertEqual(set(?TEST_MODEL, R, update_ts, 102), inc(?TEST_MODEL, R, {update_ts, 2})),
@@ -226,7 +224,7 @@ to(M, Repo, poststring) when is_tuple(Repo) ->
   to_post(M, Repo, string).
 
 to_test() ->
-  R1 = pg_test_utils:new(model),
+  R1 = t_new(model),
   ?assertEqual(
     [
       {id, 1}
@@ -242,7 +240,7 @@ to_test() ->
     ]
     , to(?TEST_MODEL, R1, proplists)),
 
-  R2 = pg_test_utils:new(model),
+  R2 = t_new(model),
   ?assertEqual(
     #{id=>1, mcht_full_name=><<"full">>, mcht_short_name=><<"short">>
       , status=>normal, payment_method =>[gw_netbank]
@@ -252,14 +250,14 @@ to_test() ->
     }
     , to(?TEST_MODEL, R2, map)),
 
-  R3 = pg_test_utils:new(model),
+  R3 = t_new(model),
   R31 = set(?TEST_MODEL, R3, [{quota, <<>>}, {payment_method, <<>>}]),
   ?assertEqual(
     <<"id=1&mcht_full_name=full&mcht_short_name=short&status=normal&up_term_no=12345678&update_ts=100">>
     , list_to_binary(to(?TEST_MODEL, R31, poststring))
   ),
 
-  R4 = pg_test_utils:new(model),
+  R4 = t_new(model),
   R41 = inc(?TEST_MODEL, R4, update_ts, 1),
 %%  L = to(?TEST_MODEL, R, proplists),
 
@@ -325,7 +323,7 @@ from(M, Map) when is_atom(M), is_map(Map) ->
 
 
 from_test() ->
-  R = pg_test_utils:new(model),
+  R = t_new(model),
   Model =
     #{id=>1, mcht_full_name=><<"full">>, mcht_short_name=><<"short">>
       , status=>normal, payment_method =>[gw_netbank]
@@ -359,7 +357,7 @@ pr_field(M, Field, Value) ->
   io_lib:format(ValueFormatter, [Field, Value]).
 
 pr_test() ->
-  R = pg_test_utils:new(model),
+  R = t_new(model),
 
   Out = pr(?TEST_MODEL, R),
   OutTrim = trim_pretty(Out),
@@ -377,8 +375,8 @@ pr_test() ->
   [E2] = io_lib:format("~ts", [Exp2]),
   ?assertEqual(E2, trim_pretty(pr(?TEST_MODEL, R1))),
 
-  R2 = pg_test_utils:new(repo),
-  Out2 = pr(?TEST_REPO, R2),
+  R2 = t_new(repo),
+  Out2 = pr(?TEST_MODEL, R2),
   OutTrim2 = trim_pretty(Out2),
 
   ?assertEqual(E, OutTrim2),
@@ -411,4 +409,9 @@ lager_out(error, M, String) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+t_new(repo) ->
+  new(?TEST_MODEL, #{id=>1, mcht_full_name=><<"full">>, mcht_short_name=><<"short">>, update_ts=>100});
+t_new(model) ->
+  new(?TEST_MODEL, #{id=>1, mcht_full_name=><<"full">>, mcht_short_name=><<"short">>, update_ts=>100}).
+
 
