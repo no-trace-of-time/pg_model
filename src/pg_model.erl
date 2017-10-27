@@ -221,7 +221,10 @@ to(M, Repo, model) when is_tuple(Repo) ->
 to(M, Repos, model) when is_list(Repos) ->
   to_model(M, Repos);
 to(M, Repo, poststring) when is_tuple(Repo) ->
-  to_post(M, Repo, string).
+  to_post(M, Repo, string);
+to(M, Repo, {poststring, OutFields}) when is_tuple(Repo), is_list(OutFields) ->
+  ?debugFmt("Repo = ~p,OutFields = ~p", [Repo, OutFields]),
+  to_post(M, Repo, OutFields, string).
 
 to_test() ->
   R1 = t_new(model),
@@ -285,6 +288,11 @@ to_test() ->
         , field=> undefined
       }
     ], to(?TEST_MODEL, [R4, R41], model)),
+
+
+  %% post outfiled
+  ?assertEqual(<<"id=1&mcht_full_name=full">>,
+    list_to_binary(to(?TEST_MODEL, R4, {poststring, [id, mcht_full_name]}))),
   ok.
 
 %%-------------------------------------------------------------------
@@ -297,6 +305,10 @@ to_proplists(M, Repo) when is_atom(M), is_tuple(Repo) ->
 %%  lager:info("Ret = ~p", [Ret]),
   Ret.
 
+to_proplists(M, Repo, OutFields) when is_atom(M), is_tuple(Repo), is_list(OutFields) ->
+  VL = [{Field, pg_model:get(M, Repo, Field)} || Field <- OutFields],
+  VL.
+
 %%-------------------------------------------------------------------
 to_map(M, Repo) when is_atom(M), is_tuple(Repo) ->
   List = to_proplists(M, Repo),
@@ -307,6 +319,10 @@ to_post(M, Repo, string) when is_atom(M), is_tuple(Repo) ->
   PL = to_proplists(M, Repo),
   xfutils:post_vals_to_iolist(PL).
 
+to_post(M, Repo, OutFields, string) when is_atom(M), is_tuple(Repo), is_list(OutFields) ->
+  PL = to_proplists(M, Repo, OutFields),
+  ?debugFmt("PL=~p", [PL]),
+  xfutils:post_vals_to_iolist(PL).
 %%-------------------------------------------------------------------
 
 to_model(M, List) when is_atom(M), is_list(List) ->
