@@ -224,7 +224,11 @@ to(M, Repo, poststring) when is_tuple(Repo) ->
   to_post(M, Repo, string);
 to(M, Repo, {poststring, OutFields}) when is_tuple(Repo), is_list(OutFields) ->
   ?debugFmt("Repo = ~p,OutFields = ~p", [Repo, OutFields]),
-  to_post(M, Repo, OutFields, string).
+  to_post(M, Repo, {OutFields}, string);
+to(M, Repo, {poststring, OutFields, In2OutFieldMap})
+  when is_tuple(Repo), is_list(OutFields), is_map(In2OutFieldMap) ->
+  ?debugFmt("Repo = ~p,OutFields = ~p", [Repo, OutFields]),
+  to_post(M, Repo, {OutFields, In2OutFieldMap}, string).
 
 to_test() ->
   R1 = t_new(model),
@@ -293,6 +297,13 @@ to_test() ->
   %% post outfiled
   ?assertEqual(<<"id=1&mcht_full_name=full">>,
     list_to_binary(to(?TEST_MODEL, R4, {poststring, [id, mcht_full_name]}))),
+  ?assertEqual(<<"MchtId=1&MchtFullName=full">>,
+    list_to_binary(to(?TEST_MODEL, R4,
+      {poststring,
+        [id, mcht_full_name],
+        #{id=><<"MchtId">>, mcht_full_name=><<"MchtFullName">>}
+      }
+    ))),
   ok.
 
 %%-------------------------------------------------------------------
@@ -305,8 +316,12 @@ to_proplists(M, Repo) when is_atom(M), is_tuple(Repo) ->
 %%  lager:info("Ret = ~p", [Ret]),
   Ret.
 
-to_proplists(M, Repo, OutFields) when is_atom(M), is_tuple(Repo), is_list(OutFields) ->
+to_proplists(M, Repo, {OutFields}) when is_atom(M), is_tuple(Repo), is_list(OutFields) ->
   VL = [{Field, pg_model:get(M, Repo, Field)} || Field <- OutFields],
+  VL;
+to_proplists(M, Repo, {OutFields, In2OutMap})
+  when is_atom(M), is_tuple(Repo), is_list(OutFields), is_map(In2OutMap) ->
+  VL = [{maps:get(Field, In2OutMap), pg_model:get(M, Repo, Field)} || Field <- OutFields],
   VL.
 
 %%-------------------------------------------------------------------
@@ -319,8 +334,8 @@ to_post(M, Repo, string) when is_atom(M), is_tuple(Repo) ->
   PL = to_proplists(M, Repo),
   xfutils:post_vals_to_iolist(PL).
 
-to_post(M, Repo, OutFields, string) when is_atom(M), is_tuple(Repo), is_list(OutFields) ->
-  PL = to_proplists(M, Repo, OutFields),
+to_post(M, Repo, OutOption, string) when is_atom(M), is_tuple(Repo), is_tuple(OutOption) ->
+  PL = to_proplists(M, Repo, OutOption),
   ?debugFmt("PL=~p", [PL]),
   xfutils:post_vals_to_iolist(PL).
 %%-------------------------------------------------------------------
