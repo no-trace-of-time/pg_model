@@ -227,7 +227,7 @@ to(M, Repo, {poststring, OutFields}) when is_tuple(Repo), is_list(OutFields) ->
   to_post(M, Repo, {OutFields}, string);
 to(M, Repo, {poststring, OutFields, In2OutFieldMap})
   when is_tuple(Repo), is_list(OutFields), is_map(In2OutFieldMap) ->
-  ?debugFmt("Repo = ~p,OutFields = ~p", [Repo, OutFields]),
+  ?debugFmt("Repo = ~p,OutFields = ~p,In2OutMap = ~p", [Repo, OutFields, In2OutFieldMap]),
   to_post(M, Repo, {OutFields, In2OutFieldMap}, string).
 
 to_test() ->
@@ -301,9 +301,10 @@ to_test() ->
     list_to_binary(to(?TEST_MODEL, R4,
       {poststring,
         [id, mcht_full_name],
-        #{id=><<"MchtId">>, mcht_full_name=><<"MchtFullName">>}
+        #{id=>{<<"MchtId">>, integer}, mcht_full_name=><<"MchtFullName">>}
       }
     ))),
+
   ok.
 
 %%-------------------------------------------------------------------
@@ -321,7 +322,16 @@ to_proplists(M, Repo, {OutFields}) when is_atom(M), is_tuple(Repo), is_list(OutF
   VL;
 to_proplists(M, Repo, {OutFields, In2OutMap})
   when is_atom(M), is_tuple(Repo), is_list(OutFields), is_map(In2OutMap) ->
-  VL = [{maps:get(Field, In2OutMap), pg_model:get(M, Repo, Field)} || Field <- OutFields],
+  F = fun
+        (Field) ->
+          case maps:get(Field, In2OutMap) of
+            {KeyName, Type} ->
+              KeyName;
+            KeyName ->
+              KeyName
+          end
+      end,
+  VL = [{F(Field), pg_model:get(M, Repo, Field)} || Field <- OutFields],
   VL.
 
 %%-------------------------------------------------------------------
