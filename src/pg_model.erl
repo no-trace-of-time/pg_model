@@ -223,11 +223,9 @@ to(M, Repos, model) when is_list(Repos) ->
 to(M, Repo, poststring) when is_tuple(Repo) ->
   to_post(M, Repo, string);
 to(M, Repo, {poststring, OutFields}) when is_tuple(Repo), is_list(OutFields) ->
-  ?debugFmt("Repo = ~p,OutFields = ~p", [Repo, OutFields]),
   to_post(M, Repo, {OutFields}, string);
 to(M, Repo, {poststring, OutFields, In2OutFieldMap})
   when is_tuple(Repo), is_list(OutFields), is_map(In2OutFieldMap) ->
-  ?debugFmt("Repo = ~p,OutFields = ~p,In2OutMap = ~p", [Repo, OutFields, In2OutFieldMap]),
   to_post(M, Repo, {OutFields, In2OutFieldMap}, string).
 
 to_test() ->
@@ -346,7 +344,6 @@ to_post(M, Repo, string) when is_atom(M), is_tuple(Repo) ->
 
 to_post(M, Repo, OutOption, string) when is_atom(M), is_tuple(Repo), is_tuple(OutOption) ->
   PL = to_proplists(M, Repo, OutOption),
-  ?debugFmt("PL=~p", [PL]),
   xfutils:post_vals_to_iolist(PL).
 %%-------------------------------------------------------------------
 

@@ -48,14 +48,6 @@
 
 -export_records([?TXN]).
 %%-------------------------------------------------------------
-%% call backs
-get(Repo, aa) when is_record(Repo, ?TXN) ->
-  {get(Repo, id), get(Repo, mcht_full_name)};
-get(Repo, Key) when is_record(Repo, ?TXN), is_atom(Key) ->
-  pg_repos:get_in(?MODULE, Repo, Key).
-
-
-%%-----------------------------------------------------------
 pr_formatter(Field)
   when (Field =:= mcht_full_name)
   or (Field =:= mcht_short_name)
