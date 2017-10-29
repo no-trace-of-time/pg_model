@@ -14,7 +14,6 @@
 %% callbacks
 -export([
   pr_formatter/1
-  , get/2
 ]).
 
 %%-compile(export_all).
