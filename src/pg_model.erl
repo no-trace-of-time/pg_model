@@ -214,6 +214,10 @@ inc_test() ->
 %%-------------------------------------------------------------------
 to(M, Repo, proplists) when is_tuple(Repo) ->
   to_proplists(M, Repo);
+to(M, Repo, {proplists, OutFields}) when is_tuple(Repo), is_list(OutFields) ->
+  to_proplists(M, Repo, OutFields);
+to(M, Repo, {proplists, OutFields, In2OutMap}) when is_tuple(Repo), is_list(OutFields) ->
+  to_proplists(M, Repo, {OutFields, In2OutMap});
 to(M, Repo, map) when is_tuple(Repo) ->
   to_map(M, Repo);
 to(M, Repo, model) when is_tuple(Repo) ->
@@ -302,6 +306,13 @@ to_test() ->
         #{id=>{<<"MchtId">>, integer}, mcht_full_name=><<"MchtFullName">>}
       }
     ))),
+  ?assertEqual([{<<"MchtId">>, 1}, {<<"MchtFullName">>, <<"full">>}],
+    to(?TEST_MODEL, R4,
+      {proplists,
+        [id, mcht_full_name],
+        #{id=>{<<"MchtId">>, integer}, mcht_full_name=><<"MchtFullName">>}
+      }
+    )),
 
   ok.
 
