@@ -306,7 +306,7 @@ to_test() ->
         #{id=>{<<"MchtId">>, integer}, mcht_full_name=><<"MchtFullName">>}
       }
     ))),
-  ?assertEqual([{<<"MchtId">>, 1}, {<<"MchtFullName">>, <<"full">>}],
+  ?assertEqual([{<<"MchtId">>, <<"1">>}, {<<"MchtFullName">>, <<"full">>}],
     to(?TEST_MODEL, R4,
       {proplists,
         [id, mcht_full_name],
@@ -334,13 +334,21 @@ to_proplists(M, Repo, {OutFields, In2OutMap})
   F = fun
         (Field) ->
           case maps:get(Field, In2OutMap) of
-            {KeyName, Type} ->
+            {KeyName, _Type} ->
+              %% value must be integer, convert it to binary
               KeyName;
             KeyName ->
               KeyName
           end
       end,
-  VL = [{F(Field), pg_model:get(M, Repo, Field)} || Field <- OutFields],
+  FValue = fun
+             (Value) when is_integer(Value) ->
+               integer_to_binary(Value);
+             (Value) ->
+               Value
+           end,
+
+  VL = [{F(Field), FValue(pg_model:get(M, Repo, Field))} || Field <- OutFields],
   VL.
 
 %%-------------------------------------------------------------------
